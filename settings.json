@@ -1,0 +1,4 @@
+{
+    "BrokerAddress": "localhost:9092",
+    "MaxMessages": 10
+}
