@@ -112,7 +112,7 @@ func main() {
 							} else if string(m.Value) == "" {
 								return nil
 							} else {
-								fmt.Println(string(m.Value))
+								fmt.Println(string(m.Value) + "\n")
 							}
 						}
 
