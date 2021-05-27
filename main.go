@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -91,7 +90,7 @@ func main() {
 						_, last, _ := conn.ReadOffsets()
 
 						r := kafka.NewReader(kafka.ReaderConfig{
-							Brokers:   strings.Split(config.BrokerAddress, ","), //[]string{config.BrokerAddress},
+							Brokers:   strings.Split(config.BrokerAddress, ","),
 							Topic:     topicName,
 							Partition: 0,
 							MinBytes:  10e3, // 10KB
@@ -148,9 +147,7 @@ func main() {
 	}
 
 	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
+	check(err)
 }
 
 func check(err error) {
