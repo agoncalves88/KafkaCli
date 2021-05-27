@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/segmentio/kafka-go"
 	"github.com/tkanos/gonfig"
@@ -15,7 +19,7 @@ var config = Configuration{}
 
 type Configuration struct {
 	BrokerAddress string
-	MaxMessages   int
+	MaxMessages   int64
 }
 
 func init() {
@@ -33,15 +37,15 @@ func main() {
 				Usage:   "complete a task on the list",
 				Action: func(c *cli.Context) error {
 					if c.Args().First() == "list" || c.Args().First() == "l" {
+
 						conn, err := kafka.Dial("tcp", config.BrokerAddress)
+
 						if err != nil {
 							panic(err.Error())
 						}
 						defer conn.Close()
 						partitions, err := conn.ReadPartitions()
-						if err != nil {
-							panic(err.Error())
-						}
+						check(err)
 						m := map[string]struct{}{}
 
 						for _, p := range partitions {
@@ -58,12 +62,8 @@ func main() {
 						}
 						conn, err := kafka.DialLeader(context.Background(), "tcp", config.BrokerAddress, topicName, 0)
 
-						if err != nil {
-							panic(err.Error())
-						} else {
-							fmt.Println("topic created")
-						}
-
+						check(err)
+						fmt.Println("topic created")
 						defer conn.Close()
 
 					} else if c.Args().First() == "delete" || c.Args().First() == "d" {
@@ -74,16 +74,10 @@ func main() {
 						}
 						conn, err := kafka.Dial("tcp", config.BrokerAddress)
 
-						if err != nil {
-							panic(err.Error())
-						} else {
-							err := conn.DeleteTopics(topicName)
-							if err != nil {
-								panic(err.Error())
-							} else {
-								fmt.Println("topic deleted")
-							}
-						}
+						check(err)
+						err = conn.DeleteTopics(topicName)
+						check(err)
+						fmt.Println("topic deleted")
 						defer conn.Close()
 					} else if c.Args().First() == "read" || c.Args().First() == "r" {
 						topicName := c.Args().Get(1)
@@ -96,7 +90,7 @@ func main() {
 						_, last, _ := conn.ReadOffsets()
 
 						r := kafka.NewReader(kafka.ReaderConfig{
-							Brokers:   []string{config.BrokerAddress},
+							Brokers:   strings.Split(config.BrokerAddress, ","), //[]string{config.BrokerAddress},
 							Topic:     topicName,
 							Partition: 0,
 							MinBytes:  10e3, // 10KB
@@ -105,17 +99,46 @@ func main() {
 						r.SetOffset(last - int64(config.MaxMessages))
 
 						for {
-							m, err := r.FetchMessage(context.Background())
-
-							if err != nil {
-								panic(err.Error())
-							} else if string(m.Value) == "" {
+							m, err := r.ReadMessage(context.Background())
+							check(err)
+							if string(m.Value) == "" {
 								return nil
 							} else {
 								fmt.Println(string(m.Value) + "\n")
 							}
 						}
+					}
+					return nil
+				},
+			}, {
+				Name:    "connection",
+				Aliases: []string{"connection"},
+				Usage:   "complete a task on the list",
+				Action: func(c *cli.Context) error {
+					if c.Args().First() == "set" {
 
+						if c.Args().Get(1) == "BrokerAddress" {
+							if c.Args().Get(2) != "" {
+								config.BrokerAddress = c.Args().Get(2)
+								newSettings, _ := json.Marshal(config)
+								err := ioutil.WriteFile("settings.json", []byte(newSettings), 0644)
+								check(err)
+
+							}
+						} else if c.Args().Get(1) == "MaxMessages" {
+							if c.Args().Get(2) != "" {
+								config.MaxMessages, _ = strconv.ParseInt(c.Args().Get(2), 10, 64)
+								newSettings, _ := json.Marshal(config)
+								err := ioutil.WriteFile("settings.json", []byte(newSettings), 0644)
+								check(err)
+							}
+						}
+
+					} else if c.Args().First() == "get" {
+						dat, err := ioutil.ReadFile("settings.json")
+
+						check(err)
+						fmt.Println(string(dat))
 					}
 					return nil
 				},
@@ -126,5 +149,11 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err.Error())
 	}
 }
