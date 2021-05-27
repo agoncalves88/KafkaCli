@@ -27,14 +27,15 @@ func init() {
 }
 
 func main() {
+
 	app := &cli.App{
 		Name:  "KafkaCli",
 		Usage: "A simple Kafka CLI program to manage your kafka",
 		Commands: []*cli.Command{
 			{
 				Name:    "topic",
-				Aliases: []string{"topic"},
-				Usage:   "complete a task on the list",
+				Aliases: []string{"list", "create", "delete", "read"},
+				Usage:   "to topic commands",
 				Action: func(c *cli.Context) error {
 					if c.Args().First() == "list" || c.Args().First() == "l" {
 
@@ -112,8 +113,8 @@ func main() {
 				},
 			}, {
 				Name:    "connection",
-				Aliases: []string{"connection"},
-				Usage:   "complete a task on the list",
+				Aliases: []string{"get", "set"},
+				Usage:   "to interact in settings.json",
 				Action: func(c *cli.Context) error {
 					if c.Args().First() == "set" {
 
