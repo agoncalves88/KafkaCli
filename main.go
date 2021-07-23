@@ -8,8 +8,10 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/tkanos/gonfig"
 	"github.com/urfave/cli/v2"
 )
@@ -17,8 +19,10 @@ import (
 var config = Configuration{}
 
 type Configuration struct {
-	BrokerAddress string
-	MaxMessages   int64
+	BrokerAddress  string
+	BrokerUserName string
+	BrokerPassword string
+	MaxMessages    int64
 }
 
 func init() {
@@ -38,7 +42,17 @@ func main() {
 				Action: func(c *cli.Context) error {
 					if c.Args().First() == "list" || c.Args().First() == "l" {
 
-						conn, err := kafka.Dial("tcp", config.BrokerAddress)
+						mechanism := plain.Mechanism{
+							Username: config.BrokerUserName,
+							Password: config.BrokerPassword,
+						}
+
+						dialer := &kafka.Dialer{
+							Timeout:       10 * time.Second,
+							DualStack:     true,
+							SASLMechanism: mechanism,
+						}
+						conn, err := dialer.DialContext(context.Background(), "tcp", config.BrokerAddress)
 
 						if err != nil {
 							panic(err.Error())
@@ -60,7 +74,18 @@ func main() {
 						if topicName == "" {
 							fmt.Println("topic name cannot be empty or null!")
 						}
-						conn, err := kafka.DialLeader(context.Background(), "tcp", config.BrokerAddress, topicName, 0)
+
+						mechanism := plain.Mechanism{
+							Username: config.BrokerUserName,
+							Password: config.BrokerPassword,
+						}
+
+						dialer := &kafka.Dialer{
+							Timeout:       10 * time.Second,
+							DualStack:     true,
+							SASLMechanism: mechanism,
+						}
+						conn, err := dialer.DialLeader(context.Background(), "tcp", config.BrokerAddress, topicName, 0)
 
 						check(err)
 						fmt.Println("topic created")
@@ -72,7 +97,19 @@ func main() {
 						if topicName == "" {
 							fmt.Println("topic name cannot be empty or null!")
 						}
-						conn, err := kafka.Dial("tcp", config.BrokerAddress)
+
+						mechanism := plain.Mechanism{
+							Username: config.BrokerUserName,
+							Password: config.BrokerPassword,
+						}
+
+						dialer := &kafka.Dialer{
+							Timeout:       10 * time.Second,
+							DualStack:     true,
+							SASLMechanism: mechanism,
+						}
+
+						conn, err := dialer.Dial("tcp", config.BrokerAddress)
 
 						check(err)
 						err = conn.DeleteTopics(topicName)
@@ -85,8 +122,18 @@ func main() {
 						if topicName == "" {
 							fmt.Println("topic name cannot be empty or null!")
 						}
+						mechanism := plain.Mechanism{
+							Username: config.BrokerUserName,
+							Password: config.BrokerPassword,
+						}
 
-						conn, _ := kafka.DialLeader(context.Background(), "tcp", config.BrokerAddress, topicName, 0)
+						dialer := &kafka.Dialer{
+							Timeout:       10 * time.Second,
+							DualStack:     true,
+							SASLMechanism: mechanism,
+						}
+
+						conn, _ := dialer.DialLeader(context.Background(), "tcp", config.BrokerAddress, topicName, 0)
 						_, last, _ := conn.ReadOffsets()
 
 						r := kafka.NewReader(kafka.ReaderConfig{

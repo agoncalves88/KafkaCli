@@ -1,1 +1,6 @@
-{"BrokerAddress":"localhost:9092","MaxMessages":10}
+{
+    "BrokerAddress": "10.13.9.216:9093",
+    "BrokerUserName": "cards.api-command",
+    "BrokerPassword": "swordfish",
+    "MaxMessages": 10
+}
