@@ -10,7 +10,11 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["topic", "list", "my_connect_configs"]
+            "args": [
+                "topic",
+                "read",
+                "Risk.Analysis.Response.Simulation"
+            ]
         }
     ]
 }

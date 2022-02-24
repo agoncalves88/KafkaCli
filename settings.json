@@ -1,6 +1,6 @@
 {
-    "BrokerAddress": "10.13.9.216:9093",
-    "BrokerUserName": "cards.api-command",
-    "BrokerPassword": "swordfish",
+    "BrokerAddress": "10.12.111.150:9093",
+    "BrokerUserName": "credit-card-agreements",
+    "BrokerPassword": "credit-card",
     "MaxMessages": 10
 }

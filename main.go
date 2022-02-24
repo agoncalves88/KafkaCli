@@ -142,6 +142,7 @@ func main() {
 							Partition: 0,
 							MinBytes:  10e3, // 10KB
 							MaxBytes:  10e6, // 10MB
+							Dialer:    dialer,
 						})
 						r.SetOffset(last - int64(config.MaxMessages))
 
